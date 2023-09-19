@@ -1,64 +1,45 @@
-//Реализация шифрования методом Цезаря.
-//Писалось на Qt, исходная строка получалась из поля окна для взаимодействия с пользователем.
-//Так как вырвал функции из цельного Qt-проекта, то отдельно они не скомпилируются и не запустятся,
-//если нужно, то перепишу, чтобы работало с консолью.
+//Общий кусок кода, отвечающий за логику шифрования вынесен из функций, вызываемых по нажатию кнопок в отдельную функцию.  
+//Общие строки, содержащие алфавиты, и значения размера алфавита были перенесы в члены класса (в этих кусках кода не присутствует).
+ 
 
-//Проблему вижу в том, что алгоритм дешифрования практически полностью аналогичен алгоритму дешифрования.
-//Также дублируются исходные алфавиты, которые нужны, чтобы менять позиции букв, размер алфавита и шаг, на который будет сдвигаться зашифрованное сообщение.
-//Перепишем согласно принципу DRY, чтобы не дублировать код.
-//Отрефакторенный код будет в отдельной ветке в репозитории.
-void MainWindow::on_pushButtonCaesarCypher_clicked()
+//Функция определяет принадлежность каждого символа из строки inputString к алфавиту верхнего или нижнего регистра,
+//после чего сдвигает его на offset символов вперёд. Берётся остаток от деления на размер алфавита, чтобы не выйти за пределы алфавита.
+QString MainWindow::Caesar(QString const &inputString, int const offset)
 {
-    QString initialString = ui->lineEditCaesarInitial->text();
-    QString upperAlphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
-    QString lowerAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
-
+    CaesarAlphabetChanged();
     QString outputString;
-    const int alphabetSize = 33;
-    const int offset = 16;
-    for(int i = 0; i < initialString.size(); ++i)
+    for(int i = 0; i < inputString.size(); ++i)
     {
-        if (upperAlphabet.contains(initialString[i]))
+        if (m_upperAlphabet.contains(inputString[i]))
         {
-            outputString.push_back(upperAlphabet[(upperAlphabet.indexOf(initialString[i]) + offset) % alphabetSize]);
+            outputString.push_back(m_upperAlphabet.at(std::abs(m_upperAlphabet.indexOf(inputString[i]) + offset) % m_alphabetSize));
         }
-        else if (lowerAlphabet.contains(initialString[i]))
+        else if (m_lowerAlphabet.contains(inputString[i]))
         {
-            outputString.push_back(lowerAlphabet[(lowerAlphabet.indexOf(initialString[i]) + offset) % alphabetSize]);
+            outputString.push_back(m_lowerAlphabet.at(std::abs(m_lowerAlphabet.indexOf(inputString[i]) + offset) % m_alphabetSize));
         }
         else
         {
-            outputString.push_back(initialString[i]);
+            outputString.push_back(inputString[i]);
         }
     }
-    ui->lineEditCaesarCrypted->setText(outputString);
+    return outputString;
 }
 
+void MainWindow::on_pushButtonCaesarCypher_clicked()
+{
+    QString initialString = ui->lineEditCaesarInitial->text();
+    int offset = ui->spinBoxCaesarOffset->value();
+    QString outputString = Caesar(initialString, offset);
+
+    ui->lineEditCaesarCrypted->setText(outputString);
+}
 
 void MainWindow::on_pushButtonCaesarDecypher_clicked()
 {
     QString cryptedString = ui->lineEditCaesarCrypted->text();
-    QString upperAlphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
-    QString lowerAlphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+    int offset =  m_alphabetSize - (ui->spinBoxCaesarOffset->value());
+    QString outputString = Caesar(cryptedString, offset);
 
-    QString outputString;
-    const int alphabetSize = 33;
-    const int offset = 17;
-
-    for(int i = 0; i < cryptedString.size(); ++i)
-    {
-        if (upperAlphabet.contains(cryptedString[i]))
-        {
-            outputString.push_back(upperAlphabet[(upperAlphabet.indexOf(cryptedString[i]) + offset) % alphabetSize]);
-        }
-        else if (lowerAlphabet.contains(cryptedString[i]))
-        {
-            outputString.push_back(lowerAlphabet[(lowerAlphabet.indexOf(cryptedString[i]) + offset) % alphabetSize]);
-        }
-        else
-        {
-            outputString.push_back(cryptedString[i]);
-        }
-    }
-    ui->lineEditCaesarDecrypted->setText(outputString);
+     ui->lineEditCaesarDecrypted->setText(outputString);
 }
